@@ -243,6 +243,7 @@ class BunttonsGrid(QGridLayout):
         self.signal = buttonText
         self.execution = f'{self.frist_n} {self.signal}'
         self.display.setFocus()
+
     def eq(self, dis: Display):
         displayText = dis.text()
         
@@ -261,12 +262,12 @@ class BunttonsGrid(QGridLayout):
     
         try:
             if '^' in self.execution and isinstance(self.frist_n, float):
-                result = math.pow(self.frist_n, self.second_n)
+                result = math.pow(self.frist_n, self.second_n) if not math.pow(self.frist_n, self.second_n).is_integer() else int(math.pow(self.frist_n, self.second_n))
                 self.display.setFocus()
                 #print(str(result))
                 #self.display.setText(str(result))
             else:
-                result = eval(self.execution)
+                result = eval(self.execution) if not eval(self.execution).is_integer() else int(eval(self.execution))
                 self.display.setFocus()
                 #self.display.setText(str(result))
                 #print(str(result))
