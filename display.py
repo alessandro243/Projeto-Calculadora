@@ -14,6 +14,7 @@ class Display(QLineEdit):
     eqesc = Signal(str)
     inputPress = Signal(str)
     operatorPress = Signal(str)
+    nPress = Signal()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -32,6 +33,7 @@ class Display(QLineEdit):
         isEsc = key in [KEYS.Key_Escape, KEYS.Key_C]
         isBack = key in [KEYS.Key_Backspace, KEYS.Key_Delete, KEYS.Key_D]
         isoperator = key in [KEYS.Key_Plus, KEYS.Key_Slash, KEYS.Key_Asterisk, KEYS.Key_Minus, KEYS.Key_P]
+        isNegative = key in [KEYS.Key_N]
         
         if isEnter:
             self.eqTrigger.emit('=')
@@ -62,7 +64,11 @@ class Display(QLineEdit):
             self.operatorPress.emit(texto)
             return event.ignore()
         #return super().keyPressEvent(event)
-    
+
+        if isNegative:
+            self.nPress.emit()
+            return event.ignore()
+
 class Info(QLabel):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -93,7 +99,7 @@ class BunttonsGrid(QGridLayout):
             ['7', '8', '9', '*'],
             ['4', '5', '6', '-'],
             ['1', '3', '2', '+'],
-            ['', '0', '.', '='],
+            ['N', '0', '.', '='],
         ]
 
         self.display=display
@@ -126,9 +132,10 @@ class BunttonsGrid(QGridLayout):
 
         self.display.eqTrigger.connect(lambda: self.eq(self.display))
         self.display.eqesc.connect(self._clear)
-        self.display.eqdelete.connect(self.display.backspace)
+        self.display.eqdelete.connect(self._backspace)
         self.display.inputPress.connect(lambda x: self._insertButtonTexttoDisplay(Botton(x), self.display))
         self.display.operatorPress.connect(lambda x: self.signalSlot(Botton(x)))
+        self.display.nPress.connect(self.invertNumber)
 
         for i, line_b in enumerate(self._gridMask):
             for j, colum_b in enumerate(line_b):
@@ -149,7 +156,10 @@ class BunttonsGrid(QGridLayout):
                 slot = self._makeSlot(self._insertButtonTexttoDisplay, buton, self.display)
                 self.connectButtonClicked(buton, slot)
                 
-    
+    def _backspace(self):
+        self.display.backspace()
+        self.display.setFocus()
+
     def connectButtonClicked(self, button, slot):
         button.clicked.connect(slot)
 
@@ -166,13 +176,26 @@ class BunttonsGrid(QGridLayout):
             self.connectButtonClicked(button, self._makeSlot(self.eq, self.display))
 
         if texto == '⌫':
-            self.connectButtonClicked(button, self.display.backspace)
+            self.connectButtonClicked(button, self._backspace)
+        
+        if texto == 'N':
+            self.connectButtonClicked(button, self.invertNumber)
 
     def _makeSlot(self, func, *args, **kwargs):
         @Slot(bool)
         def makeSlot():
             func(*args, **kwargs)
         return makeSlot
+
+    def invertNumber(self):
+        displatext = self.display.text()
+        self.display.setFocus()
+
+        if not isValid(displatext):
+            return
+
+        newNumber = -float(displatext)
+        self.display.setText(str(newNumber))
 
     def _insertButtonTexttoDisplay(self, button, dis):
         texto = button.text()
@@ -193,7 +216,7 @@ class BunttonsGrid(QGridLayout):
 
         if isValid(new_texto):
             self.display.setText(str(eval(new_texto)))
-
+        self.display.setFocus()
     @Slot()
     def _clear(self):
         self.frist_n = None
@@ -201,6 +224,7 @@ class BunttonsGrid(QGridLayout):
         self.signal = None
         self.info.setText(self.executionInit)
         self.display.clear()
+        self.display.setFocus()
 
     @Slot(Botton)
     def signalSlot(self, button):
@@ -218,7 +242,7 @@ class BunttonsGrid(QGridLayout):
         
         self.signal = buttonText
         self.execution = f'{self.frist_n} {self.signal}'
-    
+        self.display.setFocus()
     def eq(self, dis: Display):
         displayText = dis.text()
         
@@ -238,10 +262,12 @@ class BunttonsGrid(QGridLayout):
         try:
             if '^' in self.execution and isinstance(self.frist_n, float):
                 result = math.pow(self.frist_n, self.second_n)
+                self.display.setFocus()
                 #print(str(result))
                 #self.display.setText(str(result))
             else:
                 result = eval(self.execution)
+                self.display.setFocus()
                 #self.display.setText(str(result))
                 #print(str(result))
 
@@ -286,6 +312,7 @@ class BunttonsGrid(QGridLayout):
         msgbox.setInformativeText(msg)
         msgbox.setWindowTitle('Attention')
         msgbox.exec()
+
         
         #result = msgbox.exec()
         #if result == msgbox.StandardButton.Ok:
