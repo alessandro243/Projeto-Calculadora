@@ -15,6 +15,8 @@ class Display(QLineEdit):
     inputPress = Signal(str)
     operatorPress = Signal(str)
     nPress = Signal()
+    upArrowPress = Signal()
+    downArrowPress = Signal()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -34,7 +36,17 @@ class Display(QLineEdit):
         isBack = key in [KEYS.Key_Backspace, KEYS.Key_Delete, KEYS.Key_D]
         isoperator = key in [KEYS.Key_Plus, KEYS.Key_Slash, KEYS.Key_Asterisk, KEYS.Key_Minus, KEYS.Key_P]
         isNegative = key in [KEYS.Key_N]
+        isUpper = key == 16777235
+        isDown = key == 16777237
         
+        if isUpper:
+            self.upArrowPress.emit()
+            return event.ignore()
+        
+        if isDown:
+            self.downArrowPress.emit()
+            return event.ignore()
+
         if isEnter:
             self.eqTrigger.emit('=')
             return event.ignore()
@@ -68,7 +80,7 @@ class Display(QLineEdit):
         if isNegative:
             self.nPress.emit()
             return event.ignore()
-
+        
 class Info(QLabel):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -102,6 +114,10 @@ class BunttonsGrid(QGridLayout):
             ['N', '0', '.', '='],
         ]
 
+        self.i = -1
+        self.fr = True
+        self.history = ['a']
+        self.ops = []
         self.display=display
         self.window=window
         self.make_grid()
@@ -115,6 +131,44 @@ class BunttonsGrid(QGridLayout):
         self.execution = self.executionInit
         self.state = False
 
+    def safe(self, operation, result):
+        self.history.append(result)
+        self.ops.append(operation)
+    
+    def _next(self):
+
+        if not len(self.history) >= 2:
+            return
+    
+        try:
+            if self.i + 1 < 0:
+                self.i += 1
+                self.execution = f'{self.ops[self.i]} = {self.history[self.i]}'
+                self.frist_n = float(self.history[self.i])
+                            
+            else:
+                self.i -= 1
+
+        except IndexError:
+            self.i -= 1
+
+    def _back(self):
+
+        if not len(self.history) >= 2:
+            return
+        
+        try:
+            if self.history[self.i] != 'a': 
+                self.execution = f'{self.ops[self.i]} = {self.history[self.i]}'
+                self.frist_n = float(self.history[self.i])
+                self.i -= 1
+            
+            else:
+                self.i += 1
+                
+        except IndexError:
+            self.i += 1
+            
     @property
     def execution(self):
         return self._execution
@@ -124,10 +178,6 @@ class BunttonsGrid(QGridLayout):
         self._execution = vari
         self.info.setText(vari)
 
-    def metodo(self, *args):
-        print(args )
-
-
     def make_grid(self):
 
         self.display.eqTrigger.connect(lambda: self.eq(self.display))
@@ -136,6 +186,8 @@ class BunttonsGrid(QGridLayout):
         self.display.inputPress.connect(lambda x: self._insertButtonTexttoDisplay(Botton(x), self.display))
         self.display.operatorPress.connect(lambda x: self.signalSlot(Botton(x)))
         self.display.nPress.connect(self.invertNumber)
+        self.display.upArrowPress.connect(self._back)
+        self.display.downArrowPress.connect(self._next)
 
         for i, line_b in enumerate(self._gridMask):
             for j, colum_b in enumerate(line_b):
@@ -222,6 +274,7 @@ class BunttonsGrid(QGridLayout):
         self.frist_n = None
         self.second_n = None
         self.signal = None
+        self.history.clear()
         self.info.setText(self.executionInit)
         self.display.clear()
         self.display.setFocus()
@@ -246,7 +299,6 @@ class BunttonsGrid(QGridLayout):
 
     def eq(self, dis: Display):
         displayText = dis.text()
-        
 
         if not isValid(displayText):
             self.execution = 'Type error'
@@ -259,15 +311,25 @@ class BunttonsGrid(QGridLayout):
         self.second_n = float(displayText)
         self.execution = f'{self.frist_n} {self.signal} {self.second_n}'
         result = None
-    
+
+        if self.frist_n.is_integer():
+            int(self.frist_n)
+        
+        if self.second_n.is_integer():
+            int(self.second_n)
+
         try:
             if '^' in self.execution and isinstance(self.frist_n, float):
                 result = math.pow(self.frist_n, self.second_n) if not math.pow(self.frist_n, self.second_n).is_integer() else int(math.pow(self.frist_n, self.second_n))
+                self.safe(self.execution, result)
+                self.i = -2
                 self.display.setFocus()
                 #print(str(result))
                 #self.display.setText(str(result))
             else:
                 result = eval(self.execution) if not eval(self.execution).is_integer() else int(eval(self.execution))
+                self.safe(self.execution, result)
+                self.i = -2
                 self.display.setFocus()
                 #self.display.setText(str(result))
                 #print(str(result))
