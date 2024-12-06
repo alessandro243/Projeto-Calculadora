@@ -19,3 +19,5 @@ def isValid(string: str):
     except ValueError:
         return False
     return valid
+
+print('xl' in 'xvuiolp')

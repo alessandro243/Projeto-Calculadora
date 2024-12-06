@@ -20,7 +20,7 @@ qss = f"""
     QPushButton[cssClass="OButton"] {{
         color: #fff;
         background: #2E8B57;
-        border-radius: 5px;}}
+    }}
 
     QPushButton[cssClass="OButton"]:hover {{
         color: #fff;
@@ -29,6 +29,20 @@ qss = f"""
     QPushButton[cssClass="OButton"]:pressed {{
         color: #fff;
         background: #006400;
+    }}
+
+    QPushButton[cssClass="HButton"] {{
+        color: #fff;
+        background: #FEA610;  /* Laranja (fundo normal) */
+        border-radius: 17px; /* Borda arredondada para tornar o botão redondo */
+    }}
+
+    QPushButton[cssClass="HButton"]:hover {{
+        background: #E28000;  /* Laranja mais escuro (hover) */
+    }}
+
+    QPushButton[cssClass="HButton"]:pressed {{
+        background: #8D4925;  /* Laranja escuro (pressionado) */
     }}
 
     QPushButton[cssClass="specialButton"] {{
