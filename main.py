@@ -129,6 +129,11 @@ class MainWindow(QMainWindow):
         self.layout_.addLayout(layout)
     
     def next_(self):
+
+        for x, y in enumerate(window.resultsList):
+            if window.resultsList[x] == None:
+                window.resultsList.remove(y)
+
         if not self.labelList[0].isVisible():
             for l in self.labelList:
                 l.show()
@@ -159,6 +164,10 @@ class MainWindow(QMainWindow):
                 y.setStyleSheet('font-size: 15px;')
 
     def back_(self):
+
+        for x, y in enumerate(window.resultsList):
+            if window.resultsList[x] == None:
+                window.resultsList.remove(y)
 
         if not self.labelList[0].isVisible():
             
@@ -362,6 +371,7 @@ class LeftLayout(QGridLayout):
         self.equation = self.initEquation
         self.i = []
         self.makeGrid()
+        self.state = False
         
     def information(self, text):
         self.makeDialog(text)
@@ -510,7 +520,7 @@ class LeftLayout(QGridLayout):
     
     def eq(self):
         displayText = self.display.text()
-        
+        print('Sinal:', self.signal, 'segundo dígito:', self.second_n)
 
         if not isValid(displayText) or self.signal is None:
             self._showInfo('Type-error', 'O segundo número é inválido!')
@@ -519,7 +529,15 @@ class LeftLayout(QGridLayout):
         result = None
         self.second_n = float(displayText)
         self.equation = f'{self.frist_n} {self.signal} {self.second_n}'
-
+        
+        if self.signal == '/' and (self.second_n == None or self.second_n == 0):
+            self.frist_n = None
+            self.signal = None
+            self.clear_()
+            self.execution = 'Division by zero error'
+            self._showError('Dividiu por zero', 'Não é possível dividir por zero!')
+            return
+        
         if self.frist_n.is_integer():
             int(self.frist_n)
         
@@ -662,8 +680,7 @@ class LeftLayout(QGridLayout):
         except OverflowError:
             self.execution = 'Over flow error'
             self._showError('Conta exuberante demais', 'Contas em escalas muito grandes são incompatíveis!')
-            self.clear_()
-        
+            
         self.info.setText(str(result))
         self.frist_n = result
         self.display.clear()
@@ -718,6 +735,10 @@ class LeftLayout(QGridLayout):
             window.labelList[-3].setText(terceira)
             window.labelList[-2].setText(quarta)
             window.labelList[-1].setText(quinta)
+
+        if None in window.resultsList:
+            window.resultsList.clear()
+            self.clear_()
 
     def makeMsgBox(self):
         return QMessageBox()

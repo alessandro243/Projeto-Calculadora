@@ -8,9 +8,9 @@ traz uma nova função que permite calcular
 quaisquer raízes de quaisquer números.
 
 A atualização traz histórico de contas 
-que pode ser acessado clicando no relógio
-uma página se abrirá a direita e 
-nela você terá acessoao histórico de contas.
+que pode ser acessado clicando no relógio.
+Uma página se abrirá a direita e 
+nela você terá acesso ao histórico de contas.
 Você pode abrir ou navegar pelo histórico 
 apertando seta para cima ou para baixo.
 
